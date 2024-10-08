@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+dart pub global activate flutterfire_cliimport 'package:flutter/material.dart';
 
 void main() {
   runApp(const MyApp());
