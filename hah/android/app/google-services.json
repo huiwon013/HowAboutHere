@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1074794759969",
+    "project_id": "how-about-here-181dc",
+    "storage_bucket": "how-about-here-181dc.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1074794759969:android:083319b2cee596dbaa2060",
+        "android_client_info": {
+          "package_name": "com.huiwon.howabouthere"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBYqm5sCwGZWVUWaqhoDp081FkvxsZEvU8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
