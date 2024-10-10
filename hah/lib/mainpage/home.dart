@@ -3,28 +3,6 @@ import 'package:firebase_core/firebase_core.dart';
 import '../firebase_options.dart';
 import 'm_create_post.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        useMaterial3: true,
-      ),
-      home: const HomeScreen(),
-    );
-  }
-}
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -47,14 +25,14 @@ class _HomeScreenState extends State<HomeScreen> {
           // 검색창을 Action에 추가
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0), // 좌우 패딩 추가
+              padding: const EdgeInsets.only(left: 20.0), // 왼쪽 패딩만 16.0으로 설정
               child: TextField(
                 decoration: InputDecoration(
-                  hintText: '어디로 떠나시나요?',
-                  /*border: OutlineInputBorder(
+                  hintText: "어디로 떠나시나요? ",
+                  border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10.0),
                     borderSide: const BorderSide(color: Colors.grey),
-                  ),*/
+                  ),
                   suffixIcon: const Icon(Icons.search),
                   contentPadding: const EdgeInsets.only(left: 16.0, top: 12.0, bottom: 12.0),
                 ),
