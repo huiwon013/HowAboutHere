@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart'; // Firebase Core 패키지 추가
+import 'package:hah/startpage/start.dart';
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
 import 'firebase_options.dart'; // Firebase 설정 파일 추가
 import 'appbar/appbar.dart'; // AppBarWithBottomNav 파일 추가
@@ -32,7 +33,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
       ),
-      home: const AppBarWithBottomNav(), // AppBarWithBottomNav 사용
+      home: StartPage(), // AppBarWithBottomNav 사용
     );
   }
 }
