@@ -11,7 +11,7 @@ environment:
 
 
 dependencies:
-  kakao_flutter_sdk_user: ^1.9.5 # 카카오 로그인 API 패키지
+  kakao_flutter_sdk_user: ^1.9.6 # 카카오 로그인 API 패키지
   flutter:
     sdk: flutter
 
