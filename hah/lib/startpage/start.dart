@@ -33,34 +33,46 @@ class _StartPageState extends State<StartPage> {
       _isLoggingIn = true; // 로그인 중임을 표시
     });
 
-    try {
-      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
-        email: _emailController.text,
-        password: _passwordController.text,
-      );
-      Navigator.pushReplacementNamed(context, '/home');
-    } catch (e) {
-      print('Firebase 로그인 실패: $e');
+    bool success = await _viewModel.login();
+
+    if (success) {
+      try {
+        // 카카오 사용자 정보를 가져오기
+        var user = await UserApi.instance.me();
+        String email = _emailController.text; // 입력한 이메일 가져오기
+        String name = user.kakaoAccount?.profile?.nickname ?? '';
+
+        // Firebase에 사용자 등록
+        UserCredential userCredential = await _auth.signInWithCredential(
+          EmailAuthProvider.credential(
+            email: email,
+            password: _passwordController.text, // 입력한 비밀번호 가져오기
+          ),
+        );
+
+        // Firestore에 사용자 정보 저장하기
+        // await FirebaseFirestore.instance.collection('users').doc(userCredential.user?.uid).set({
+        //   'name': name,
+        //   'email': email,
+        // });
+
+        Navigator.pushReplacementNamed(context, '/home');
+      } catch (e) {
+        print('Firebase에 사용자 등록 실패: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('로그인 후 사용자 정보를 저장하는 데 실패했습니다.')),
+        );
+      }
+    } else {
+      // 로그인 실패 시 알림
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('로그인 실패: 이메일과 비밀번호를 확인해주세요.')),
+        SnackBar(content: Text('로그인 실패')),
       );
     }
 
     setState(() {
       _isLoggingIn = false; // 로그인 완료 후 상태 복원
     });
-  }
-
-  // 카카오 로그인 처리 메소드
-  void _handleKakaoLogin() async {
-    bool success = await _viewModel.login();
-    if (success) {
-      Navigator.pushReplacementNamed(context, '/home');
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('카카오 로그인 실패')),
-      );
-    }
   }
 
   // 회원가입 페이지로 이동하는 메소드
@@ -77,7 +89,7 @@ class _StartPageState extends State<StartPage> {
       backgroundColor: Colors.white, // 배경색을 흰색으로 설정
       appBar: AppBar(
         title: Text('로그인'),
-        backgroundColor: Colors.blue[50] // 카카오톡 색상으로 설정
+        backgroundColor: Colors.blueGrey, // 카카오톡 색상으로 설정
       ),
       body: Center(
         child: Padding(
@@ -85,61 +97,60 @@ class _StartPageState extends State<StartPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // 아이디 입력 필드 (인스타그램 스타일)
+              SizedBox(height: 40),
+              // 아이디 입력 필드
               TextField(
                 controller: _emailController,
                 decoration: InputDecoration(
-                  hintText: '아이디',
-                  border: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey),
-                  ),
+                  labelText: '아이디',
+                  labelStyle: TextStyle(color: Colors.grey[50]),
+                  border: OutlineInputBorder(),
+                  filled: true,
+                  fillColor: Colors.grey[200],
                 ),
+                keyboardType: TextInputType.emailAddress,
               ),
               SizedBox(height: 20), // 입력 필드와 다음 필드 사이 간격 추가
-              // 비밀번호 입력 필드 (인스타그램 스타일)
+              // 비밀번호 입력 필드
               TextField(
                 controller: _passwordController,
                 decoration: InputDecoration(
-                  hintText: '비밀번호',
-                  border: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey),
-                  ),
+                  labelText: '비밀번호',
+                  labelStyle: TextStyle(color: Colors.grey[50]),
+                  border: OutlineInputBorder(),
+                  filled: true,
+                  fillColor: Colors.grey[200],
                 ),
                 obscureText: true, // 비밀번호 숨기기
               ),
-              SizedBox(height: 40), // 입력 필드와 버튼 사이 간격 추가
-              // 로그인 버튼
+              SizedBox(height: 20), // 입력 필드와 이미지 사이 간격 추가
+              // 카카오 로그인 버튼 이미지
+              Container(
+                height: 48,
+                child: ShadowedImage(
+                  image: AssetImage('lib/startpage/kakao_login.png'), // 카카오 로그인 버튼 이미지
+                ),
+              ),
+              SizedBox(height: 20), // 이미지와 로그인 버튼 사이 간격 추가
               ElevatedButton(
-                onPressed: _isLoggingIn ? null : _handleLogin, // 로그인 처리
+                onPressed: _isLoggingIn ? null : _handleLogin, // 로그인 버튼 클릭 시 로그인 처리
                 child: Text('로그인', style: TextStyle(color: Colors.white)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.black, // 배경색을 검은색으로 설정
-                  minimumSize: Size(buttonWidth, buttonHeight), // 버튼 크기
+                  minimumSize: Size(buttonWidth, buttonHeight), // 버튼의 너비와 높이 설정
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8.0), // 모서리 둥글게
                   ),
                   elevation: 5, // 그림자 추가
                 ),
               ),
-              SizedBox(height: 20), // 버튼과 카카오 로그인 이미지 간격
-              // 카카오 로그인 이미지 (카카오 로그인 기능)
-              GestureDetector(
-                onTap: _isLoggingIn ? null : _handleKakaoLogin, // 카카오 로그인 처리
-                child: Container(
-                  height: 48,
-                  child: ShadowedImage(
-                    image: AssetImage('lib/startpage/kakao_login.png'), // 카카오 로그인 버튼 이미지
-                  ),
-                ),
-              ),
-              SizedBox(height: 40), // 이미지와 회원가입 버튼 사이 간격 추가
-              // 회원가입 버튼
+              SizedBox(height: 20), // 로그인 버튼과 회원가입 버튼 사이 간격 추가
               TextButton(
                 onPressed: _isLoggingIn ? null : _handleSignUp,
                 child: Text(
                   '회원가입',
                   style: TextStyle(
-                    color: Colors.grey[700], // 진한 회색으로 설정
+                    color: Color(0xFF007aff), // 회원가입 버튼 색상
                     fontSize: 16,
                   ),
                 ),
