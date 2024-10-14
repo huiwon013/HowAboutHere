@@ -89,9 +89,10 @@ class _RegisterPageState extends State<RegisterPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(""),
-        backgroundColor: Color(0xFFF6E690),
+        backgroundColor: Colors.blue[50], // 연한 파란색
       ),
-      backgroundColor: Color(0xFFF6E690),
+      // 배경색을 연한 파란색으로 변경
+      backgroundColor: Colors.blue[50],
       body: SingleChildScrollView(
         child: Center(
           child: Padding(
@@ -100,7 +101,8 @@ class _RegisterPageState extends State<RegisterPage> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: <Widget>[
                 SizedBox(height: 80.0),
-                Text('회원가입', style: TextStyle(fontSize: 27.0, fontWeight: FontWeight.bold)),
+                Text('회원가입',
+                    style: TextStyle(fontSize: 27.0, fontWeight: FontWeight.bold, color: Colors.black)),
                 SizedBox(height: 23.0),
                 Container(
                   width: 320,
@@ -136,6 +138,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                 ),
                 SizedBox(height: 20.0),
+                // 버튼 색상도 연한 파란색으로 변경
                 Container(
                   width: 310,
                   height: 45,
@@ -144,7 +147,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       _register();
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFFFFF1B4),
+                      backgroundColor: Colors.black, // 연한 파란색
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -153,7 +156,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     child: Text(
                       '가입하기',
                       style: TextStyle(
-                        color: Colors.black54,
+                        color: Colors.white,
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
@@ -161,45 +164,33 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                 ),
                 SizedBox(height: 20.0),
-                showErrorMessage && !isRegistered &&
-                    email.isNotEmpty &&
-                    password.isNotEmpty &&
-                    confirmPassword.isNotEmpty &&
-                    name.isNotEmpty &&
-                    userNickname.isNotEmpty
-                    ? SizedBox(
-                  child: RichText(
-                    text: TextSpan(
-                      style: TextStyle(color: Colors.brown, fontSize: 17),
-                      children: [
-                        TextSpan(
-                          text: ' 가입이 완료되었습니다.\n',
-                        ),
-                        TextSpan(
-                          text: '이메일을 확인하고 로그인 페이지로 이동하기',
-                          style: TextStyle(
-                            decoration: TextDecoration.underline,
-                            fontWeight: FontWeight.bold,
+                if (showErrorMessage && !isRegistered && email.isNotEmpty && password.isNotEmpty && confirmPassword.isNotEmpty && name.isNotEmpty && userNickname.isNotEmpty)
+                  SizedBox(
+                    child: RichText(
+                      text: TextSpan(
+                        style: TextStyle(color: Colors.brown, fontSize: 17),
+                        children: [
+                          TextSpan(
+                            text: ' 가입이 완료되었습니다.\n',
                           ),
-                        ),
-                      ],
+                          TextSpan(
+                            text: '이메일을 확인하고 로그인 페이지로 이동하기',
+                            style: TextStyle(
+                              decoration: TextDecoration.underline,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                )
-                    : SizedBox.shrink(),
-                !isRegistered && showErrorMessage &&
-                    (email.isEmpty ||
-                        password.isEmpty ||
-                        confirmPassword.isEmpty ||
-                        name.isEmpty ||
-                        userNickname.isEmpty)
-                    ? SizedBox(
-                  child: Text(
-                    '정보를 입력하세요.',
-                    style: TextStyle(color: Colors.red, fontSize: 18),
+                if (!isRegistered && showErrorMessage && (email.isEmpty || password.isEmpty || confirmPassword.isEmpty || name.isEmpty || userNickname.isNotEmpty))
+                  SizedBox(
+                    child: Text(
+                      '정보를 입력하세요.',
+                      style: TextStyle(color: Colors.red, fontSize: 18),
+                    ),
                   ),
-                )
-                    : SizedBox.shrink(),
               ],
             ),
           ),
