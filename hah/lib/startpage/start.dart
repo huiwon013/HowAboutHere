@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:hah/mainpage/home.dart';
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
 import 'kakaologin.dart';
 import 'main_view_model.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'register.dart'; // register.dart 파일을 import합니다.
+import 'register.dart';
 
 abstract class Start {
   Future<bool> login();
@@ -38,7 +39,11 @@ class _StartPageState extends State<StartPage> {
         email: _emailController.text,
         password: _passwordController.text,
       );
-      Navigator.pushReplacementNamed(context, '/home');
+      // 로그인 성공 시 HomeScreen으로 이동
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => HomeScreen()),
+      );
     } catch (e) {
       print('Firebase 로그인 실패: $e');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -55,7 +60,10 @@ class _StartPageState extends State<StartPage> {
   void _handleKakaoLogin() async {
     bool success = await _viewModel.login();
     if (success) {
-      Navigator.pushReplacementNamed(context, '/home');
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => HomeScreen()), // 카카오 로그인 성공 시 HomeScreen으로 이동
+      );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('카카오 로그인 실패')),
@@ -77,7 +85,7 @@ class _StartPageState extends State<StartPage> {
       backgroundColor: Colors.white, // 배경색을 흰색으로 설정
       appBar: AppBar(
         title: Text('로그인'),
-        backgroundColor: Colors.blue[50] // 카카오톡 색상으로 설정
+        backgroundColor: Colors.blue[50], // 카카오톡 색상으로 설정
       ),
       body: Center(
         child: Padding(

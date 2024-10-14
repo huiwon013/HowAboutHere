@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 class RegisterPage extends StatefulWidget {
   @override
@@ -19,32 +20,44 @@ class _RegisterPageState extends State<RegisterPage> {
 
   bool isRegistered = false;
   bool showErrorMessage = false;
+  String errorMessage = '';
+
+  @override
+  void initState() {
+    super.initState();
+    // Firebase 초기화
+    _initializeFirebase();
+  }
+
+  Future<void> _initializeFirebase() async {
+    await Firebase.initializeApp();
+  }
 
   void _register() async {
     setState(() {
       showErrorMessage = true;
+      errorMessage = ''; // 에러 메시지 초기화
     });
 
+    // 필수 입력값 체크
+    if (email.isEmpty || password.isEmpty || confirmPassword.isEmpty || name.isEmpty || userNickname.isEmpty) {
+      setState(() {
+        errorMessage = "모든 필드를 입력해주세요.";
+        isRegistered = false;
+      });
+      return;
+    }
+
+    // 비밀번호 확인
+    if (password != confirmPassword) {
+      setState(() {
+        errorMessage = "비밀번호가 일치하지 않습니다.";
+        isRegistered = false;
+      });
+      return;
+    }
+
     try {
-      // 필수 입력값 체크
-      if (email.isEmpty ||
-          password.isEmpty ||
-          confirmPassword.isEmpty ||
-          name.isEmpty ||
-          userNickname.isEmpty) {
-        print("정보를 입력해주세요.");
-        setState(() {
-          isRegistered = false;
-        });
-        return;
-      }
-
-      // 비밀번호 확인
-      if (password != confirmPassword) {
-        print("비밀번호와 비밀번호 확인이 일치하지 않습니다.");
-        return;
-      }
-
       // 사용자에게 이메일 인증 메일 전송
       await _sendEmailVerification();
       setState(() {
@@ -53,6 +66,7 @@ class _RegisterPageState extends State<RegisterPage> {
     } catch (e) {
       print("회원가입 실패: $e");
       setState(() {
+        errorMessage = "회원가입 실패: ${e.toString()}";
         isRegistered = false; // 회원가입 실패
       });
     }
@@ -81,6 +95,7 @@ class _RegisterPageState extends State<RegisterPage> {
       }
     } catch (e) {
       print('이메일 인증 메일 전송 실패: $e');
+      throw e; // 에러를 다시 던져서 상위 함수에서 처리하도록 합니다.
     }
   }
 
@@ -91,7 +106,6 @@ class _RegisterPageState extends State<RegisterPage> {
         title: Text(""),
         backgroundColor: Colors.blue[50], // 연한 파란색
       ),
-      // 배경색을 연한 파란색으로 변경
       backgroundColor: Colors.blue[50],
       body: SingleChildScrollView(
         child: Center(
@@ -114,23 +128,18 @@ class _RegisterPageState extends State<RegisterPage> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
-                      // 이메일 입력
                       _buildTextField("이메일", Icons.email_outlined, (value) {
                         email = value;
                       }),
-                      // 비밀번호 입력
                       _buildTextField("비밀번호", Icons.lock_outline, (value) {
                         password = value;
                       }, obscureText: true),
-                      // 비밀번호 확인 입력
                       _buildTextField("비밀번호 확인", Icons.lock_outline, (value) {
                         confirmPassword = value;
                       }, obscureText: true),
-                      // 이름 입력
                       _buildTextField("이름", Icons.person_outline, (value) {
                         name = value;
                       }),
-                      // 닉네임 입력
                       _buildTextField("닉네임", Icons.account_circle, (value) {
                         userNickname = value;
                       }),
@@ -138,7 +147,6 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                 ),
                 SizedBox(height: 20.0),
-                // 버튼 색상도 연한 파란색으로 변경
                 Container(
                   width: 310,
                   height: 45,
@@ -147,11 +155,11 @@ class _RegisterPageState extends State<RegisterPage> {
                       _register();
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black, // 연한 파란색
+                      backgroundColor: Colors.black,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      elevation: 2, // 그림자 추가
+                      elevation: 2,
                     ),
                     child: Text(
                       '가입하기',
@@ -164,30 +172,10 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                 ),
                 SizedBox(height: 20.0),
-                if (showErrorMessage && !isRegistered && email.isNotEmpty && password.isNotEmpty && confirmPassword.isNotEmpty && name.isNotEmpty && userNickname.isNotEmpty)
-                  SizedBox(
-                    child: RichText(
-                      text: TextSpan(
-                        style: TextStyle(color: Colors.brown, fontSize: 17),
-                        children: [
-                          TextSpan(
-                            text: ' 가입이 완료되었습니다.\n',
-                          ),
-                          TextSpan(
-                            text: '이메일을 확인하고 로그인 페이지로 이동하기',
-                            style: TextStyle(
-                              decoration: TextDecoration.underline,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                if (!isRegistered && showErrorMessage && (email.isEmpty || password.isEmpty || confirmPassword.isEmpty || name.isEmpty || userNickname.isNotEmpty))
+                if (showErrorMessage)
                   SizedBox(
                     child: Text(
-                      '정보를 입력하세요.',
+                      errorMessage,
                       style: TextStyle(color: Colors.red, fontSize: 18),
                     ),
                   ),
@@ -199,7 +187,6 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
-  // TextField 생성 메소드
   Widget _buildTextField(String label, IconData icon, Function(String) onChanged, {bool obscureText = false}) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 10),
