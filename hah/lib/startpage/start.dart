@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hah/appbar/appbar.dart';
 import 'package:hah/mainpage/home.dart';
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
 import 'kakaologin.dart';
@@ -42,7 +43,7 @@ class _StartPageState extends State<StartPage> {
       // 로그인 성공 시 HomeScreen으로 이동
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => HomeScreen()),
+        MaterialPageRoute(builder: (context) => AppBarWithBottomNav()), // app.dart(하단바)
       );
     } catch (e) {
       print('Firebase 로그인 실패: $e');

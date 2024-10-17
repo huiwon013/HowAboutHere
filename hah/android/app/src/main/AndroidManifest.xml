@@ -1,10 +1,19 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.hah">
 
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+
     <application
         android:label="hah"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+
+        <!--구글 지도 api-->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyBvoKU-Mgup6i2c68v9USD6IvBeWS49CX0"/>
 
         <!-- 카카오 로그인 커스텀 URL 스킴 설정 -->
         <activity
