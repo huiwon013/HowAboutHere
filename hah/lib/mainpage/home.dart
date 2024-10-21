@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import '../firebase_options.dart';
+import 'm_all_posts.dart';
 import 'm_create_post.dart';
 
 
@@ -13,6 +14,11 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   bool isDomesticSelected = true; // 기본 선택 상태를 국내로 설정
+  final List<String> cities = [
+    '서울특별시', '부산광역시', '제주특별자치도''인천광역시', '경기도', '강원도', '충청남도', '충청북도',
+    '경상북도', '경상남도', '전라북도', '전라남도',
+    '대전광역시', '광주광역시', '대구광역시', '울산광역시', '기타'
+  ]; // 도시 리스트
 
   @override
   Widget build(BuildContext context) {
@@ -84,12 +90,34 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
           // Firebase에서 데이터를 불러오는 부분
+          // 국내 도시 버튼 목록
           Expanded(
-            child: Center(
-              child: Text(isDomesticSelected
-                  ? '국내 데이터 표시' // 국내 데이터 표시
-                  : '해외 데이터 표시'), // 해외 데이터 표시
-            ),
+            child: isDomesticSelected
+                ? GridView.builder(
+              padding: const EdgeInsets.all(10.0),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2, // 2열로 배치
+                mainAxisSpacing: 10.0,
+                crossAxisSpacing: 10.0,
+                childAspectRatio: 3, // 버튼의 가로:세로 비율 조정
+              ),
+              itemCount: cities.length,
+              itemBuilder: (context, index) {
+                return ElevatedButton(
+                  onPressed: () {
+                    // 도시 버튼을 클릭하면 m_all_posts.dart 페이지로 이동
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => AllPostsPage(city: cities[index]), // 선택된 도시로 이동
+                      ),
+                    );
+                  },
+                  child: Text(cities[index]),
+                );
+              },
+            )
+                : const Center(child: Text('해외 데이터 표시')), // 해외 선택 시 처리
           ),
         ],
       ),
@@ -116,4 +144,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+}
+
+class _buildCityGrid {
 }
