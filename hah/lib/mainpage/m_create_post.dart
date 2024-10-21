@@ -118,6 +118,20 @@ class _CreatePostPageState extends State<CreatePostPage> {
     );
   }
 
+  Future<String> _getAdministrativeArea(LatLng latLng) async {
+    try {
+      List<Placemark> placemarks = await placemarkFromCoordinates(latLng.latitude, latLng.longitude);
+      if (placemarks.isNotEmpty) {
+        Placemark place = placemarks.first;
+        return place.administrativeArea ?? 'Unknown'; // 도시명이나 지역명이 저장됨
+      }
+    } catch (e) {
+      print('Reverse Geocoding 오류: $e');
+      return 'Unknown';
+    }
+    return 'Unknown';
+  }
+
 
   Future<void> _savePostToFirestore() async {
     try {
@@ -125,6 +139,8 @@ class _CreatePostPageState extends State<CreatePostPage> {
       User? user = FirebaseAuth.instance.currentUser;
       if (user != null) {
         String uid = user.uid; // 사용자의 UID 가져오기
+        String administrativeArea = await _getAdministrativeArea(_currentLatLng!); // 현재 위치의 행정구역 정보 얻기
+
 
         // Firestore에 'posts' 컬렉션 내에 'uid'별로 서브컬렉션 생성 후 데이터 저장
         await FirebaseFirestore.instance
@@ -135,6 +151,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
           'title': _titleController.text,
           'location': _locationController.text,
           'content': _contentController.text,
+          'region': administrativeArea, // 지역 정보 추가
           'timestamp': FieldValue.serverTimestamp(),
         });
 
