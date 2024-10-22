@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../appbar/appbar.dart';
+import '../startpage/start.dart'; // 첫 페이지 파일을 import 합니다.
 
 class MyPage extends StatelessWidget {
   @override
@@ -96,7 +97,7 @@ class MyPage extends StatelessWidget {
             ),
             InkWell(
               onTap: () {
-                // 로그아웃 다이얼로그 표시
+                _showLogoutDialog(context);
               },
               child: ListTile(
                 leading: Icon(Icons.exit_to_app),
@@ -127,6 +128,35 @@ class MyPage extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('로그아웃 하시겠습니까?'),
+          actions: <Widget>[
+            TextButton(
+              child: Text('아니요'),
+              onPressed: () {
+                Navigator.of(context).pop(); // 다이얼로그 닫기
+              },
+            ),
+            TextButton(
+              child: Text('예'),
+              onPressed: () {
+                Navigator.of(context).pop(); // 다이얼로그 닫기
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (context) => StartPage()), // 첫 페이지로 이동
+                      (route) => false,
+                );
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }
