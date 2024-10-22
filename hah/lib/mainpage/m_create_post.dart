@@ -108,7 +108,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (context) => AppBarWithBottomNav()), // HomeScreen()으로 이동
-                (Route<dynamic> route) => false, // 모든 이전 경로 제거
+                (Route<dynamic> route) => false, // 모든 이전 경로 제거192
           );
         },
         child: const Text('완료'),

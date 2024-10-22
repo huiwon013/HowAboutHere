@@ -37,7 +37,7 @@ class AllPostsPage extends StatelessWidget {
             itemBuilder: (context, index) {
               var post = snapshot.data!.docs[index];
               var username = post['userNickname'] ?? '사용자 없음'; // 사용자 이름
-              var date = post['date']?.toDate() ?? DateTime.now(); // 날짜
+              var date = post['timestamp']?.toDate() ?? DateTime.now(); // 날짜
               var title = post['title'] ?? '제목 없음'; // 게시물 제목
               var content = post['content'] ?? '내용 없음'; // 게시물 내용
               var location = post['location'] ?? '위치 없음'; // 게시물 위치
@@ -47,22 +47,31 @@ class AllPostsPage extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      mainAxisAlignment: MainAxisAlignment.start,
                       children: [
-                        Text(username, style: TextStyle(fontSize: 14, color: Colors.grey)),
+                        Icon(Icons.account_circle, size: 16, color: Colors.grey),
+                        SizedBox(width: 4),
+                        Text(username, style: TextStyle(fontSize: 14, color: Colors.grey)), // 사용자 닉네임
+                        Spacer(), // 닉네임과 날짜 사이의 간격을 자동으로 조절
                         Text(
                           '${date.year}-${date.month}-${date.day}',
-                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                          style: TextStyle(fontSize: 12, color: Colors.grey), // timestamp를 Date로 변환
                         ),
                       ],
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      title,
+                      title, //제목
                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                     const SizedBox(height: 4),
-                    Text(location, style: TextStyle(fontSize: 12, color: Colors.grey)),
+                    Row(
+                      children: [
+                        Icon(Icons.location_on, size: 16, color: Colors.grey), // 지역 아이콘
+                        SizedBox(width: 4), // 아이콘과 텍스트 사이의 간격
+                        Text(location, style: TextStyle(fontSize: 12, color: Colors.grey)), // 위치 텍스트
+                      ],
+                    ),
                   ],
                 ),
                 subtitle: Text(content, maxLines: 2, overflow: TextOverflow.ellipsis), // 게시물 내용 일부 표시
