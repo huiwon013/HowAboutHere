@@ -6,6 +6,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:hah/appbar/appbar.dart';
 import 'package:hah/mainpage/home.dart';
 
 
@@ -106,7 +107,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
           _savePostToFirestore(); // Firestore에 데이터 저장 함수 호출
           Navigator.pushAndRemoveUntil(
             context,
-            MaterialPageRoute(builder: (context) => HomeScreen()), // HomeScreen()으로 이동
+            MaterialPageRoute(builder: (context) => AppBarWithBottomNav()), // HomeScreen()으로 이동
                 (Route<dynamic> route) => false, // 모든 이전 경로 제거
           );
         },
@@ -141,18 +142,25 @@ class _CreatePostPageState extends State<CreatePostPage> {
         String uid = user.uid; // 사용자의 UID 가져오기
         String administrativeArea = await _getAdministrativeArea(_currentLatLng!); // 현재 위치의 행정구역 정보 얻기
 
+      // Firestore에서 uid를 기반으로 users 컬렉션에서 userNickname 가져오기
+        DocumentSnapshot userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .get();
 
-        // Firestore에 'posts' 컬렉션 내에 'uid'별로 서브컬렉션 생성 후 데이터 저장
-        await FirebaseFirestore.instance
-            .collection('posts') // 'posts' 컬렉션
-            .doc(uid) // 사용자별 문서 (uid 사용)
-            .collection('userPosts') // 각 사용자의 게시물 서브컬렉션
-            .add({
+      // userDoc에서 userNickname 필드 가져오기
+        String userNickname = userDoc['userNickname'];
+
+        // Firestore에 새 게시물 문서 추가
+        await FirebaseFirestore.instance.collection('posts').add({
+          'userNickname': userNickname,
+          'uid': uid,
           'title': _titleController.text,
           'location': _locationController.text,
+          'region': administrativeArea, // 지역 정보
           'content': _contentController.text,
-          'region': administrativeArea, // 지역 정보 추가
-          'timestamp': FieldValue.serverTimestamp(),
+          'timestamp': FieldValue.serverTimestamp(), // 작성 시간
+
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
