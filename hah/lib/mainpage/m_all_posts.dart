@@ -16,7 +16,7 @@ class AllPostsPage extends StatelessWidget {
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('posts') // Firestore의 'posts' 컬렉션
-            .where('location', isEqualTo: city) // 선택된 도시와 일치하는 게시물 필터링
+            .where('region', isEqualTo: city) // 선택된 도시와 일치하는 게시물 필터링
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
@@ -36,9 +36,36 @@ class AllPostsPage extends StatelessWidget {
             itemCount: snapshot.data!.docs.length,
             itemBuilder: (context, index) {
               var post = snapshot.data!.docs[index];
+              var username = post['userNickname'] ?? '사용자 없음'; // 사용자 이름
+              var date = post['date']?.toDate() ?? DateTime.now(); // 날짜
+              var title = post['title'] ?? '제목 없음'; // 게시물 제목
+              var content = post['content'] ?? '내용 없음'; // 게시물 내용
+              var location = post['location'] ?? '위치 없음'; // 게시물 위치
+
               return ListTile(
-                title: Text(post['title'] ?? '제목 없음'), // 게시물 제목 표시
-                subtitle: Text(post['content'] ?? '내용 없음'), // 게시물 내용 일부 표시
+                title: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(username, style: TextStyle(fontSize: 14, color: Colors.grey)),
+                        Text(
+                          '${date.year}-${date.month}-${date.day}',
+                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      title,
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(location, style: TextStyle(fontSize: 12, color: Colors.grey)),
+                  ],
+                ),
+                subtitle: Text(content, maxLines: 2, overflow: TextOverflow.ellipsis), // 게시물 내용 일부 표시
                 onTap: () {
                   // 게시물 상세 보기 기능 추가 가능
                 },
