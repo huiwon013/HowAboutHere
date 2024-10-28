@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -8,6 +9,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:hah/appbar/appbar.dart';
 import 'package:hah/mainpage/home.dart';
+import 'package:image_picker/image_picker.dart';
 
 
 class CreatePostPage extends StatefulWidget {
@@ -23,7 +25,11 @@ class _CreatePostPageState extends State<CreatePostPage> {
   final TextEditingController _contentController = TextEditingController(); // 내용 필드 추가
   GoogleMapController? _mapController;
   LatLng? _currentLatLng; // 현재 위치를 저장할 변수 추가
+  List<Widget> _contentItems = []; // 텍스트와 이미지를 저장할 리스트
 
+  final ImagePicker _picker = ImagePicker();
+  List<XFile> _images = []; // 이미지 파일들을 저장하는 리스트
+  List<String> imageUrls = []; // 업로드된 이미지 URL들을 저장하는 리스트
 
 
   @override
@@ -71,53 +77,116 @@ class _CreatePostPageState extends State<CreatePostPage> {
             ),
             const SizedBox(height: 16.0),
             // 사진 버튼
-            ElevatedButton(
-              onPressed: () {
-                // 사진 선택 동작 추가
-              },
-              child: const Icon(Icons.camera_alt),
+            ElevatedButton.icon(
+              icon: Icon(Icons.camera_alt),
+              label: Text("사진 추가"),
+              onPressed: _addImage,
             ),
             const SizedBox(height: 16.0),
-            // 글 작성 필드
-            Container(
-              height: 300,
+            // 글 작성 입력 필드
+            Expanded(
               child: SingleChildScrollView(
-                child: TextField(
-                  controller: _contentController,
-                  maxLines: null,
-                  decoration: const InputDecoration(
-                    hintText: '내용을 입력하세요',
-                    border: InputBorder.none,
-                  ),
+                child: Column(
+                  children: _contentItems,
                 ),
               ),
             ),
-            const SizedBox(height: 8.0),
-            Container(
-              height: 1.0,
-              color: Colors.grey,
+            const SizedBox(height: 16.0),
+            // 글 작성 입력 필드
+            TextField(
+              controller: _contentController,
+              decoration: InputDecoration(
+                hintText: '글 작성...',
+                border: OutlineInputBorder(),
+              ),
+              onSubmitted: (text) {
+                _addText(text);
+                _contentController.clear(); // 입력 필드 비우기
+              },
             ),
-            const SizedBox(height: 8.0),
+            const SizedBox(height: 16.0),
+/*            // 사진 추가 버튼
+            ElevatedButton.icon(
+              icon: Icon(Icons.camera_alt),
+              label: Text("사진 추가"),
+              onPressed: _addImage,
+            ),*/
           ],
         ),
       ),
       // 완료 버튼
-      floatingActionButton: ElevatedButton(
+      floatingActionButton: FloatingActionButton(
         onPressed: () {
           _savePostToFirestore(); // Firestore에 데이터 저장 함수 호출
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (context) => AppBarWithBottomNav()), // HomeScreen()으로 이동
-                (Route<dynamic> route) => false, // 모든 이전 경로 제거192
+                (Route<dynamic> route) => false, // 모든 이전 경로 제거
           );
         },
         child: const Text('완료'),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.white,
-        ),
+        backgroundColor: Colors.white,
       ),
     );
   }
+
+  // 이미지 추가 함수
+  Future<void> _addImage() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        // 사진 추가
+        _contentItems.add(
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: Column(
+              children: [
+                Image.file(
+                  File(pickedFile.path),
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
+/*                // 사진 아래에 텍스트 입력 필드
+                TextField(
+                  decoration: const InputDecoration(
+                    hintText: '사진 아래에 추가할 텍스트 입력',
+                    border: InputBorder.none,
+                  ),
+                  onSubmitted: (text) {
+                    _addTextBelowImage(text);
+                  },
+                ),*/
+              ],
+            ),
+          ),
+        );
+      });
+    }
+  }
+
+  void _addText(String text) {
+    if (text.isNotEmpty) {
+      setState(() {
+        _contentItems.add(Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4.0),
+          child: Text(text),
+        ));
+      });
+    }
+  }
+
+/*
+  void _addTextBelowImage(String text) {
+    setState(() {
+      if (text.isNotEmpty) {
+        _contentItems.add(Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4.0),
+          child: Text(text),
+        ));
+      }
+    });
+  }
+*/
 
   Future<String> _getAdministrativeArea(LatLng latLng) async {
     try {
@@ -158,6 +227,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
           'title': _titleController.text,
           'location': _locationController.text,
           'region': administrativeArea, // 지역 정보
+          'imageUrls': imageUrls, // 이미지 URL 목록을 추가
           'content': _contentController.text,
           'timestamp': FieldValue.serverTimestamp(), // 작성 시간
 

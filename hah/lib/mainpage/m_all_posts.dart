@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'm_detail_post.dart';
+
 class AllPostsPage extends StatelessWidget {
   final String city; // 선택한 도시명
 
@@ -10,8 +12,33 @@ class AllPostsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('$city 게시물'), // 선택된 도시명 표시
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.white, // 배경색 흰색으로 설정
+        toolbarHeight: 100, // AppBar 높이 조정
+        actions: [
+          // 검색창을 Action에 추가
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(left: 46.0), // 왼쪽 패딩만 16.0으로 설정
+              child: TextField(
+                decoration: InputDecoration(
+                  hintText: "어디로 떠나시나요? ",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                    borderSide: const BorderSide(color: Colors.grey),
+                  ),
+                  suffixIcon: const Icon(Icons.search),
+                  contentPadding: const EdgeInsets.only(left: 16.0, top: 12.0, bottom: 12.0),
+                ),
+              ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.notifications),
+            onPressed: () {
+              // 알림 버튼 클릭 시 동작 추가
+            },
+          ),
+        ],
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
@@ -76,7 +103,18 @@ class AllPostsPage extends StatelessWidget {
                 ),
                 subtitle: Text(content, maxLines: 2, overflow: TextOverflow.ellipsis), // 게시물 내용 일부 표시
                 onTap: () {
-                  // 게시물 상세 보기 기능 추가 가능
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => PostDetailPage(
+                        title: title,
+                        content: content,
+                        location: location,
+                        username: username,
+                        date: date,
+                      ),
+                    ),
+                  );
                 },
               );
             },
