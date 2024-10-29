@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:math';
 
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -97,7 +98,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
               controller: _contentController,
               decoration: InputDecoration(
                 hintText: '글 작성...',
-                border: OutlineInputBorder(),
+                //border: OutlineInputBorder()
               ),
               onSubmitted: (text) {
                 _addText(text);
@@ -134,8 +135,19 @@ class _CreatePostPageState extends State<CreatePostPage> {
   Future<void> _addImage() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
+      // Firebase Storage에 이미지 업로드
+      String filePath = 'images/${DateTime.now()}.png';
+      Reference ref = FirebaseStorage.instance.ref().child(filePath);
+      UploadTask uploadTask = ref.putFile(File(pickedFile.path));
+
+      final snapshot = await uploadTask;
+      final imageUrl = await snapshot.ref.getDownloadURL();
+
       setState(() {
-        // 사진 추가
+        // Firestore에 저장할 imageUrls 리스트에 업로드된 이미지 URL 추가
+        imageUrls.add(imageUrl);
+
+        // _contentItems에 이미지 위젯 추가
         _contentItems.add(
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -146,16 +158,6 @@ class _CreatePostPageState extends State<CreatePostPage> {
                   width: double.infinity,
                   fit: BoxFit.cover,
                 ),
-/*                // 사진 아래에 텍스트 입력 필드
-                TextField(
-                  decoration: const InputDecoration(
-                    hintText: '사진 아래에 추가할 텍스트 입력',
-                    border: InputBorder.none,
-                  ),
-                  onSubmitted: (text) {
-                    _addTextBelowImage(text);
-                  },
-                ),*/
               ],
             ),
           ),
@@ -163,6 +165,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
       });
     }
   }
+
 
   void _addText(String text) {
     if (text.isNotEmpty) {
