@@ -106,6 +106,7 @@ class _AllPostsPageState extends State<AllPostsPage> {
                     var title = post['title'] ?? '제목 없음';
                     var content = post['content'] ?? '내용 없음';
                     var location = post['location'] ?? '위치 없음';
+                    var imageUrls = (post['imageUrls'] as List<dynamic>).cast<String>(); // List<dynamic>을 List<String>으로 변환
 
                     return Card(
                       color: Colors.white,
@@ -137,6 +138,7 @@ class _AllPostsPageState extends State<AllPostsPage> {
                               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                             ),
                             const SizedBox(height: 4),
+                            // 위치 표시
                             Row(
                               children: [
                                 Icon(Icons.location_on, size: 16, color: Colors.grey),
@@ -144,6 +146,27 @@ class _AllPostsPageState extends State<AllPostsPage> {
                                 Text(location, style: TextStyle(fontSize: 12, color: Colors.grey)),
                               ],
                             ),
+                            SizedBox(height: 4),
+                            // 이미지 표시
+                            if (imageUrls.isNotEmpty) // 이미지 URL이 있을 때만 표시
+                              SizedBox(
+                                height: 150, // 이미지 높이 설정
+                                child: ListView.builder(
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount: imageUrls.length,
+                                  itemBuilder: (context, index) {
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                                      child: Image.network(
+                                        imageUrls[index],
+                                        fit: BoxFit.cover,
+                                        width: 150, // 이미지 너비 설정
+                                        height: 100,
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
                           ],
                         ),
                         subtitle: Text(content, maxLines: 2, overflow: TextOverflow.ellipsis),
@@ -157,6 +180,7 @@ class _AllPostsPageState extends State<AllPostsPage> {
                                 location: location,
                                 username: username,
                                 date: date,
+                                imageUrls: imageUrls,
                               ),
                             ),
                           );
