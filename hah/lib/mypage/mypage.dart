@@ -30,8 +30,9 @@ class _MyPageState extends State<MyPage> {
         DocumentSnapshot snapshot = await FirebaseFirestore.instance.collection('users').doc(uid).get();
         if (snapshot.exists) {
           setState(() {
-            userNickname = snapshot['UserNickname'] ?? '닉네임 없음'; // 닉네임 설정
-            userEmail = user.email ?? '이메일 없음'; // 이메일 설정
+            // 'name'과 'email' 필드에서 값을 가져옴
+            userNickname = snapshot['name'] ?? '닉네임 없음'; // 'name' 필드로 수정
+            userEmail = snapshot['email'] ?? '이메일 없음'; // 'email' 필드로 수정
           });
         } else {
           setState(() {
