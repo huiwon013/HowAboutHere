@@ -27,7 +27,7 @@ class _MyPostPageState extends State<MyPostPage> {
       QuerySnapshot querySnapshot = await _firestore
           .collection('posts')
           .where('uid', isEqualTo: _currentUser!.uid) // uid 기준으로 필터링
-          .orderBy('createdAt', descending: true) // 작성 시간을 기준으로 정렬 (옵션)
+          .orderBy('timestamp', descending: true) // 작성 시간을 기준으로 정렬 (옵션)
           .get();
 
       setState(() {
@@ -36,6 +36,13 @@ class _MyPostPageState extends State<MyPostPage> {
             .toList();
         _isLoading = false;
       });
+
+      // 게시물이 없는 경우 사용자에게 알림
+      if (_userPosts.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('작성한 글이 없습니다.')),
+        );
+      }
     } catch (e) {
       print('Error fetching user posts: $e');
       setState(() {
@@ -80,3 +87,4 @@ class _MyPostPageState extends State<MyPostPage> {
     );
   }
 }
+

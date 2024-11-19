@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Firestore 추가
 import '../startpage/start.dart';
 
 class DeleteAccountPage extends StatefulWidget {
@@ -118,7 +119,13 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
         // Re-authenticate the user
         await user.reauthenticateWithCredential(credential);
 
-        // Delete the user
+        // Delete user posts from Firestore
+        await _deleteUserPosts(user.uid);
+
+        // Delete the user from Firestore
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).delete();
+
+        // Delete the user from Firebase Authentication
         await user.delete();
 
         // Navigate to start page
@@ -132,6 +139,23 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
         isPasswordInvalid = true;
         errorMessage = '비밀번호가 올바르지 않습니다.';
       });
+    }
+  }
+
+  Future<void> _deleteUserPosts(String userId) async {
+    try {
+      // Firestore에서 사용자의 모든 게시물 가져오기
+      QuerySnapshot postsSnapshot = await FirebaseFirestore.instance
+          .collection('posts')
+          .where('uid', isEqualTo: userId)  // 사용자의 uid 기준으로 게시물을 검색
+          .get();
+
+      // 각 게시물을 삭제
+      for (var doc in postsSnapshot.docs) {
+        await doc.reference.delete();
+      }
+    } catch (e) {
+      print("게시물 삭제 중 오류 발생: $e");
     }
   }
 }
