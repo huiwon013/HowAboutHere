@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import '../firebase_options.dart';
@@ -18,7 +19,37 @@ class _HomeScreenState extends State<HomeScreen> {
     '서울특별시', '부산광역시', '제주특별자치도', '인천광역시', '경기도', '강원도', '충청남도', '충청북도',
     '경상북도', '경상남도', '전라북도', '전라남도',
     '대전광역시', '광주광역시', '대구광역시', '울산광역시', '기타'
-  ]; // 도시 리스트
+  ]; // 국내도시 리스트
+  List<String> countries = []; // 해외 데이터 저장할 리스트
+
+  @override
+  void initState() {
+    super.initState();
+    fetchCountries(); // 초기화 시 나라 목록 가져오기
+  }
+
+  Future<void> fetchCountries() async {
+    try {
+      // '해외'인 문서만 가져오기
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('posts')
+          .where('type', isEqualTo: '해외')
+          .get();
+
+      // region 필드를 가져와 중복 제거 후 countries 리스트 생성
+      final regions = querySnapshot.docs
+          .map((doc) => doc['country'].toString())
+          .toSet()
+          .toList();
+
+      setState(() {
+        countries = regions;
+      });
+    } catch (e) {
+      print('Error fetching countries: $e');
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -93,31 +124,8 @@ class _HomeScreenState extends State<HomeScreen> {
           // 국내 도시 버튼 목록
           Expanded(
             child: isDomesticSelected
-                ? GridView.builder(
-              padding: const EdgeInsets.all(10.0),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2, // 2열로 배치
-                mainAxisSpacing: 10.0,
-                crossAxisSpacing: 10.0,
-                childAspectRatio: 3, // 버튼의 가로:세로 비율 조정
-              ),
-              itemCount: cities.length,
-              itemBuilder: (context, index) {
-                return ElevatedButton(
-                  onPressed: () {
-                    // 도시 버튼을 클릭하면 m_all_posts.dart 페이지로 이동
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => AllPostsPage(city: cities[index]), // 선택된 도시로 이동
-                      ),
-                    );
-                  },
-                  child: Text(cities[index]),
-                );
-              },
-            )
-                : const Center(child: Text('해외 데이터 표시')), // 해외 선택 시 처리
+                ? buildDomesticGrid() // 국내 도시 그리드
+                : buildCountryGrid(),  // 해외 나라 그리드
           ),
         ],
       ),
@@ -144,7 +152,62 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+
+// 국내 도시 그리드
+  Widget buildDomesticGrid() {
+    return GridView.builder(
+      padding: const EdgeInsets.all(10.0),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 10.0,
+        crossAxisSpacing: 10.0,
+        childAspectRatio: 3,
+      ),
+      itemCount: cities.length,
+      itemBuilder: (context, index) {
+        return ElevatedButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => AllPostsPage(city: cities[index]),
+              ),
+            );
+          },
+          child: Text(cities[index]),
+        );
+      },
+    );
+  }
+
+  // 해외 나라 그리드
+  Widget buildCountryGrid() {
+    return countries.isEmpty
+        ? const Center(child: CircularProgressIndicator()) // 데이터 로드 중
+        : GridView.builder(
+      padding: const EdgeInsets.all(10.0),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 10.0,
+        crossAxisSpacing: 10.0,
+        childAspectRatio: 3,
+      ),
+      itemCount: countries.length,
+      itemBuilder: (context, index) {
+        return ElevatedButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => AllPostsPage(city: countries[index]),
+              ),
+            );
+          },
+          child: Text(countries[index]),
+        );
+      },
+    );
+  }
 }
 
-class _buildCityGrid {
-}
+

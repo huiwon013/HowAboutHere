@@ -191,66 +191,82 @@ class _CreatePostPageState extends State<CreatePostPage> {
   }
 */
 
-  Future<String> _getAdministrativeArea(LatLng latLng) async {
+  Future<Map<String, String>> _getAdministrativeArea(LatLng latLng) async {
     try {
       List<Placemark> placemarks = await placemarkFromCoordinates(latLng.latitude, latLng.longitude);
       if (placemarks.isNotEmpty) {
         Placemark place = placemarks.first;
-        return place.administrativeArea ?? 'Unknown'; // 도시명이나 지역명이 저장됨
+        String country = place.country ?? 'Unknown'; // 국가 정보
+        String region = place.locality ?? place.subAdministrativeArea ?? 'Unknown'; // 도시 정보 (locality 우선, 없으면 subAdministrativeArea 사용)
+        //국내 해외 판별
+        String type = (country == 'South Korea') ? '국내' : '해외';
+
+
+        return {'country': country, 'region': region, 'type':type};
       }
     } catch (e) {
       print('Reverse Geocoding 오류: $e');
-      return 'Unknown';
+      return {'country': 'Unknown', 'region': 'Unknown'};
     }
-    return 'Unknown';
+    return {'country': 'Unknown', 'region': 'Unknown'};
   }
-
 
   Future<void> _savePostToFirestore() async {
     try {
-      // 현재 로그인된 사용자 가져오기
       User? user = FirebaseAuth.instance.currentUser;
       if (user != null) {
-        String uid = user.uid; // 사용자의 UID 가져오기
-        String administrativeArea = await _getAdministrativeArea(_currentLatLng!); // 현재 위치의 행정구역 정보 얻기
+        String uid = user.uid;
 
-      // Firestore에서 uid를 기반으로 users 컬렉션에서 userNickname 가져오기
+        // 현재 위치의 지역 정보와 타입 얻기
+        String administrativeArea = 'Unknown';
+        String type = 'Unknown';
+        String country = 'Unknown';
+        if (_currentLatLng != null) {
+          Map<String, String> locationData = await _getAdministrativeArea(_currentLatLng!);
+
+          administrativeArea = locationData['region'] ??'Unknown'!;
+          country = locationData['country'] ?? 'Unknown';
+          type = locationData['type']?? 'Unknown';
+        }
+
+        // Firestore에서 사용자 닉네임 가져오기
         DocumentSnapshot userDoc = await FirebaseFirestore.instance
             .collection('users')
             .doc(uid)
             .get();
 
-      // userDoc에서 userNickname 필드 가져오기
         String userNickname = userDoc['userNickname'];
 
-        // Firestore에 새 게시물 문서 추가
+        // Firestore에 새 게시물 추가
         await FirebaseFirestore.instance.collection('posts').add({
           'userNickname': userNickname,
           'uid': uid,
           'title': _titleController.text,
           'location': _locationController.text,
-          'region': administrativeArea, // 지역 정보
-          'imageUrls': imageUrls, // 이미지 URL 목록을 추가
+          'country': country, // 나라 저장
+          'region': administrativeArea, // 도시 저장
+          'type': type, // 국내/해외 정보 추가
+          'imageUrls': imageUrls,
           'content': _contentController.text,
-          'timestamp': FieldValue.serverTimestamp(), // 작성 시간
-
+          'timestamp': FieldValue.serverTimestamp(),
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('포스트가 성공적으로 저장되었습니다!')),
         );
       } else {
-        // 로그인이 되어 있지 않다면 에러 메시지 표시
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('로그인이 필요합니다.')),
         );
       }
     } catch (e) {
+      print('저장 실패: $e');  // 콘솔에 오류 출력
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('저장에 실패했습니다: $e')),
       );
     }
   }
+
 
 // 지도 다이얼로그
   Future<void> _showLocationDialog(BuildContext context) async {
