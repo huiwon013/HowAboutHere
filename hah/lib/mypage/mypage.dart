@@ -5,6 +5,7 @@ import '../appbar/appbar.dart';
 import '../startpage/find_Register.dart';
 import '../startpage/start.dart';
 import 'delete_account.dart';
+import 'my_post.dart'; // MyPostPage 추가
 
 class MyPage extends StatefulWidget {
   @override
@@ -108,7 +109,10 @@ class _MyPageState extends State<MyPage> {
               leading: Icon(Icons.article),
               title: Text('작성한 글'),
               onTap: () {
-                // TODO: 작성한 글 기능 구현
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => MyPostPage()), // MyPostPage로 이동
+                );
               },
             ),
             ListTile(
