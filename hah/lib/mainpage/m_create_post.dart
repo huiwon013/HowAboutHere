@@ -198,9 +198,106 @@ class _CreatePostPageState extends State<CreatePostPage> {
         Placemark place = placemarks.first;
         String country = place.country ?? 'Unknown'; // 국가 정보
         String region = place.locality ?? place.subAdministrativeArea ?? 'Unknown'; // 도시 정보 (locality 우선, 없으면 subAdministrativeArea 사용)
-        //국내 해외 판별
-        String type = (country == 'South Korea') ? '국내' : '해외';
 
+        //서울 위도경도
+        if (latLng.latitude >= 37.0 && latLng.latitude <= 37.8 &&
+            latLng.longitude >= 126.5 && latLng.longitude <= 127.2) {
+          region = '서울특별시';
+        }
+        // 부산의 위도, 경도 범위
+        else if (latLng.latitude >= 35.1 && latLng.latitude <= 35.3 &&
+            latLng.longitude >= 129.0 && latLng.longitude <= 129.4) {
+          region = '부산광역시';
+        }
+        // 제주도 위도, 경도 범위
+        else if (latLng.latitude >= 33.0 && latLng.latitude <= 33.5 &&
+            latLng.longitude >= 126.0 && latLng.longitude <= 126.5) {
+          region = '제주특별자치도';
+        }
+        // 인천 위도, 경도 범위
+        else if (latLng.latitude >= 37.3 && latLng.latitude <= 37.7 &&
+            latLng.longitude >= 126.4 && latLng.longitude <= 126.7) {
+          region = '인천광역시';
+        }
+
+        // 경기도
+        else if (latLng.latitude >= 37.0 && latLng.latitude <= 38.0 &&
+            latLng.longitude >= 126.5 && latLng.longitude <= 127.7) {
+          region = '경기도';
+        }
+
+        // 강원도
+        else if (latLng.latitude >= 37.3 && latLng.latitude <= 38.6 &&
+            latLng.longitude >= 127.0 && latLng.longitude <= 129.0) {
+          region = '강원도';
+        }
+
+        // 충청남도
+        else if (latLng.latitude >= 36.0 && latLng.latitude <= 37.2 &&
+            latLng.longitude >= 126.0 && latLng.longitude <= 127.5) {
+          region = '충청남도';
+        }
+
+        // 충청북도
+        else if (latLng.latitude >= 36.3 && latLng.latitude <= 37.5 &&
+            latLng.longitude >= 127.0 && latLng.longitude <= 128.5) {
+          region = '충청북도';
+        }
+
+        // 경상북도
+        else if (latLng.latitude >= 35.5 && latLng.latitude <= 36.5 &&
+            latLng.longitude >= 128.5 && latLng.longitude <= 130.0) {
+          region = '경상북도';
+        }
+
+        // 경상남도
+        else if (latLng.latitude >= 34.5 && latLng.latitude <= 35.5 &&
+            latLng.longitude >= 128.0 && latLng.longitude <= 129.5) {
+          region = '경상남도';
+        }
+
+        // 전라북도
+        else if (latLng.latitude >= 35.0 && latLng.latitude <= 36.5 &&
+            latLng.longitude >= 126.5 && latLng.longitude <= 128.0) {
+          region = '전라북도';
+        }
+
+        // 전라남도
+        else if (latLng.latitude >= 34.5 && latLng.latitude <= 35.6 &&
+            latLng.longitude >= 126.0 && latLng.longitude <= 127.5) {
+          region = '전라남도';
+        }
+
+        // 대전광역시
+        else if (latLng.latitude >= 36.3 && latLng.latitude <= 36.5 &&
+            latLng.longitude >= 127.2 && latLng.longitude <= 127.6) {
+          region = '대전광역시';
+        }
+
+        // 광주광역시
+        else if (latLng.latitude >= 35.1 && latLng.latitude <= 35.3 &&
+            latLng.longitude >= 126.7 && latLng.longitude <= 127.1) {
+          region = '광주광역시';
+        }
+
+        // 대구광역시
+        else if (latLng.latitude >= 35.8 && latLng.latitude <= 35.9 &&
+            latLng.longitude >= 128.5 && latLng.longitude <= 129.1) {
+          region = '대구광역시';
+        }
+
+        // 울산광역시
+        else if (latLng.latitude >= 35.4 && latLng.latitude <= 35.7 &&
+            latLng.longitude >= 129.0 && latLng.longitude <= 129.4) {
+          region = '울산광역시';
+        }
+
+        else {
+          region = '기타';
+        }
+        //국내 해외 판별
+        String type = (country == '대한민국') ? '국내' : '해외';
+        
 
         return {'country': country, 'region': region, 'type':type};
       }
@@ -334,6 +431,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
 // 주소 검색 함수
   Future<void> _searchLocation() async {
     String address = _locationController.text; // 입력한 주소 가져오기
+
     if (address.isNotEmpty) {
       try {
         // Geocoding을 통해 주소를 위도와 경도로 변환
@@ -342,12 +440,20 @@ class _CreatePostPageState extends State<CreatePostPage> {
           Location location = locations.first; // 첫 번째 위치 사용
           LatLng newLatLng = LatLng(location.latitude, location.longitude); // 새 위치
 
+          //12/8 추가
+          // Reverse Geocoding을 통해 해당 좌표가 어느 지역에 속하는지 판단
+          Map<String, String> addressInfo = await _getAdministrativeArea(newLatLng);
+          String region = addressInfo['region'] ?? 'Unknown'; // region 정보 가져오기
+
           // 지도 이동 및 마커 업데이트
           if (_mapController != null) { // mapController가 null이 아닐 경우
             _mapController!.animateCamera(CameraUpdate.newLatLng(newLatLng)); // 지도 이동
             setState(() {
               _currentLatLng = newLatLng; // 현재 위치 업데이트
+
             });
+
+            print('지역: $region');
           }
         }
       } catch (e) {

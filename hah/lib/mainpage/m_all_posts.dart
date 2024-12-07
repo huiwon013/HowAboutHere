@@ -14,6 +14,22 @@ class AllPostsPage extends StatefulWidget {
 class _AllPostsPageState extends State<AllPostsPage> {
   String sortOption = '인기순';
 
+  Future<List<QueryDocumentSnapshot>> fetchPosts() async {
+    final collection = FirebaseFirestore.instance.collection('posts');
+
+    // 두 가지 조건(region과 country)에 대한 쿼리 실행
+    var regionQuery = await collection.where('region', isEqualTo: widget.city).get();
+    var countryQuery = await collection.where('country', isEqualTo: widget.city).get();
+
+    // 두 쿼리 결과 병합 (중복 제거)
+    var allPosts = [
+      ...regionQuery.docs,
+      ...countryQuery.docs,
+    ].toSet().toList(); // Set으로 변환 후 다시 List로 변환하여 중복 제거
+
+    return allPosts;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -79,11 +95,8 @@ class _AllPostsPageState extends State<AllPostsPage> {
             ),
           ),
           Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('posts')
-                  .where('region', isEqualTo: widget.city)
-                  .snapshots(),
+            child: FutureBuilder<List<QueryDocumentSnapshot>>(
+              future: fetchPosts(),
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
                   return Center(child: Text('오류 발생: ${snapshot.error}'));
@@ -93,20 +106,22 @@ class _AllPostsPageState extends State<AllPostsPage> {
                   return const Center(child: CircularProgressIndicator());
                 }
 
-                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
                   return const Center(child: Text('게시물이 없습니다.'));
                 }
 
+                var posts = snapshot.data!;
+
                 return ListView.builder(
-                  itemCount: snapshot.data!.docs.length,
+                  itemCount: posts.length,
                   itemBuilder: (context, index) {
-                    var post = snapshot.data!.docs[index];
+                    var post = posts[index];
                     var username = post['userNickname'] ?? '사용자 없음';
                     var date = post['timestamp']?.toDate() ?? DateTime.now();
                     var title = post['title'] ?? '제목 없음';
                     var content = post['content'] ?? '내용 없음';
                     var location = post['location'] ?? '위치 없음';
-                    var imageUrls = (post['imageUrls'] as List<dynamic>).cast<String>(); // List<dynamic>을 List<String>으로 변환
+                    var imageUrls = (post['imageUrls'] as List<dynamic>).cast<String>();
 
                     return Card(
                       color: Colors.white,
@@ -138,7 +153,6 @@ class _AllPostsPageState extends State<AllPostsPage> {
                               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                             ),
                             const SizedBox(height: 4),
-                            // 위치 표시
                             Row(
                               children: [
                                 Icon(Icons.location_on, size: 16, color: Colors.grey),
@@ -147,10 +161,9 @@ class _AllPostsPageState extends State<AllPostsPage> {
                               ],
                             ),
                             SizedBox(height: 4),
-                            // 이미지 표시
-                            if (imageUrls.isNotEmpty) // 이미지 URL이 있을 때만 표시
+                            if (imageUrls.isNotEmpty)
                               SizedBox(
-                                height: 150, // 이미지 높이 설정
+                                height: 150,
                                 child: ListView.builder(
                                   scrollDirection: Axis.horizontal,
                                   itemCount: imageUrls.length,
@@ -160,7 +173,7 @@ class _AllPostsPageState extends State<AllPostsPage> {
                                       child: Image.network(
                                         imageUrls[index],
                                         fit: BoxFit.cover,
-                                        width: 150, // 이미지 너비 설정
+                                        width: 150,
                                         height: 100,
                                       ),
                                     );
