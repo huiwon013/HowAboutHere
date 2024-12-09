@@ -178,6 +178,7 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
                       var content = post['content'] ?? '내용 없음';
                       var location = post['location'] ?? '위치 없음';
                       var imageUrls = (post['imageUrls'] as List<dynamic>).cast<String>();
+                      var postId = post.id;
 
                       return Card(
                         color: Colors.white,
@@ -250,6 +251,7 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
                                   username: username,
                                   date: date,
                                   imageUrls: imageUrls,
+                                  postId: postId,
                                 ),
                               ),
                             );

@@ -23,6 +23,7 @@ dependencies:
   geocoding: ^3.0.0
   image_picker: ^0.8.7+4 # 이미지 선택을 위한 패키지
   firebase_storage: ^12.3.4
+  intl: ^0.20.1
 
 dev_dependencies:
   flutter_test:
