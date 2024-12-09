@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:hah/mainpage/search.dart';
 import '../firebase_options.dart';
 import 'm_all_posts.dart';
 import 'm_create_post.dart';
@@ -62,20 +63,41 @@ class _HomeScreenState extends State<HomeScreen> {
           // 검색창을 Action에 추가
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.only(left: 20.0), // 왼쪽 패딩만 16.0으로 설정
-              child: TextField(
-                decoration: InputDecoration(
-                  hintText: "어디로 떠나시나요? ",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10.0),
-                    borderSide: const BorderSide(color: Colors.grey),
+              padding: const EdgeInsets.only(left: 20.0),
+              child: GestureDetector(
+                onTap: () {
+                  // SearchScreen으로 이동
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const SearchScreen()),
+                  );
+                },
+                child: TextField(
+                  enabled: false, // 클릭만 가능하도록 설정
+                  decoration: InputDecoration(
+                    hintText: "어디로 떠나시나요?",
+                    hintStyle: const TextStyle(color: Colors.black54), // 힌트 텍스트 색상
+                    filled: true, // 배경색 활성화
+                    fillColor: Colors.white, // 배경색 설정
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10.0),
+                      borderSide: const BorderSide(color: Colors.black54, width: 1.5), // 비활성화 상태 테두리
+                    ),
+                    disabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10.0),
+                      borderSide: const BorderSide(color: Colors.black54, width: 1.5), // 비활성화 상태 테두리
+                    ),
+                    suffixIcon: const Icon(Icons.search, color: Colors.black), // 검색 아이콘 색상
+                    contentPadding: const EdgeInsets.only(left: 16.0, top: 12.0, bottom: 12.0),
                   ),
-                  suffixIcon: const Icon(Icons.search),
-                  contentPadding: const EdgeInsets.only(left: 16.0, top: 12.0, bottom: 12.0),
                 ),
               ),
             ),
           ),
+
           IconButton(
             icon: const Icon(Icons.notifications),
             onPressed: () {
