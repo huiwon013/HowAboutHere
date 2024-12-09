@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // Firestore 패키지 추가
 import 'package:firebase_auth/firebase_auth.dart'; // Firebase Auth 패키지 추가
+import 'package:hah/mypage/save_post.dart';
 import '../appbar/appbar.dart';
 import '../startpage/find_Register.dart';
 import '../startpage/start.dart';
@@ -126,7 +127,10 @@ class _MyPageState extends State<MyPage> {
               leading: Icon(Icons.bookmark),
               title: Text('북마크'),
               onTap: () {
-                // TODO: 북마크 기능 구현
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const BookmarksPage()), // 북마크 페이지로 이동
+                );
               },
             ),
             ListTile(
