@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+import 'c_create_post.dart';
 
 class CommunityPage extends StatefulWidget {
   const CommunityPage({super.key});
@@ -9,7 +12,6 @@ class CommunityPage extends StatefulWidget {
 }
 
 class _CommunityPageState extends State<CommunityPage> {
-  int selectedTabIndex = 0;
   late Stream<QuerySnapshot> _postStream;
 
   @override
@@ -21,46 +23,71 @@ class _CommunityPageState extends State<CommunityPage> {
         .snapshots();
   }
 
-  // Like 버튼 클릭 시
+  // 좋아요 버튼 클릭 시
   void _toggleLike(DocumentSnapshot post) async {
     final isLiked = post['isLiked'] ?? false;
+    final currentLikes = post['likes'] ?? 0;
 
-    await FirebaseFirestore.instance.runTransaction((transaction) async {
-      final freshSnapshot = await transaction.get(post.reference);
-      // 좋아요 상태를 반전시켜 저장
-      transaction.update(post.reference, {'isLiked': !isLiked});
-    });
+    try {
+      // Firestore에서 해당 게시물의 좋아요 상태를 반전시켜 저장
+      await FirebaseFirestore.instance.runTransaction((transaction) async {
+        final freshSnapshot = await transaction.get(post.reference);
+        transaction.update(post.reference, {
+          'isLiked': !isLiked,
+          'likes': isLiked ? currentLikes - 1 : currentLikes + 1,
+        });
+      });
 
-    setState(() {}); // 상태 변경 후 UI 갱신
+      setState(() {}); // UI 갱신
+    } catch (e) {
+      print('좋아요 처리 오류: $e');
+    }
   }
 
-  // Save 버튼 클릭 시
+  // 저장 버튼 클릭 시
   void _toggleSave(DocumentSnapshot post) async {
     final isSaved = post['saved'] ?? false;
 
-    await FirebaseFirestore.instance.runTransaction((transaction) async {
-      final freshSnapshot = await transaction.get(post.reference);
-      // 저장 상태를 반전시켜 저장
-      transaction.update(post.reference, {'saved': !isSaved});
-    });
+    try {
+      // Firestore에서 해당 게시물의 저장 상태를 반전시켜 저장
+      await FirebaseFirestore.instance.runTransaction((transaction) async {
+        final freshSnapshot = await transaction.get(post.reference);
+        transaction.update(post.reference, {'saved': !isSaved});
+      });
 
-    setState(() {}); // 상태 변경 후 UI 갱신
+      setState(() {}); // UI 갱신
+    } catch (e) {
+      print('저장 처리 오류: $e');
+    }
   }
 
-  Future<String> _getUserNickname(String uid) async {
+  // 댓글 추가 함수
+  Future<void> _addComment(DocumentSnapshot post, String comment) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return; // 로그인된 사용자가 없으면 댓글을 추가하지 않음
+
     try {
-      DocumentSnapshot userSnapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .get();
-      if (userSnapshot.exists) {
-        return userSnapshot['nickname'] ?? '알 수 없음';
-      } else {
-        return '알 수 없음';
-      }
+      // 댓글을 Firestore에 추가
+      await FirebaseFirestore.instance.collection('communityPosts').doc(post.id).update({
+        'comments': FieldValue.arrayUnion([
+          {
+            'nickname': user.displayName ?? '알 수 없음',
+            'comment': comment,
+            'timestamp': FieldValue.serverTimestamp(),
+          }
+        ]),
+      });
     } catch (e) {
-      return '알 수 없음';
+      print('댓글 추가 실패: $e');
     }
+  }
+
+  // 플러스 버튼 클릭 시 게시물 작성 페이지로 이동
+  void _navigateToCreatePostPage(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => CMCreatePostPage()),
+    );
   }
 
   @override
@@ -71,6 +98,12 @@ class _CommunityPageState extends State<CommunityPage> {
         backgroundColor: Colors.white,
         toolbarHeight: 100,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.add, size: 30, color: Colors.black),
+            onPressed: () {
+              _navigateToCreatePostPage(context); // 플러스 버튼 클릭 시 페이지 이동
+            },
+          ),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.only(left: 20.0),
@@ -109,15 +142,6 @@ class _CommunityPageState extends State<CommunityPage> {
             thickness: 1,
             color: Colors.black,
           ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildTab('전체', 0),
-              _buildTab('인기글', 1),
-              _buildTab('국내', 2),
-              _buildTab('해외', 3),
-            ],
-          ),
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: _postStream,
@@ -147,100 +171,139 @@ class _CommunityPageState extends State<CommunityPage> {
                     final likes = data['likes'] ?? 0;
                     final isLiked = data['isLiked'] ?? false;
                     final isSaved = data['saved'] ?? false;
-                    final uid = data['uid'] ?? '';
+                    final images = List<String>.from(data['imageUrls'] ?? []); // 이미지 목록
+                    final comments = List<Map<String, dynamic>>.from(data['comments'] ?? []); // 댓글 목록
 
-                    return FutureBuilder<String>(
-                      future: _getUserNickname(uid),
-                      builder: (context, nicknameSnapshot) {
-                        if (nicknameSnapshot.connectionState == ConnectionState.waiting) {
-                          return const Center(child: CircularProgressIndicator());
-                        }
+                    TextEditingController commentController = TextEditingController();
 
-                        final nickname = nicknameSnapshot.data ?? '알 수 없음';
-
-                        return Card(
-                          margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // 사용자 정보와 업로드 시간
-                              Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Row(
+                    return Card(
+                      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Row(
+                              children: [
+                                const CircleAvatar(
+                                  backgroundImage: AssetImage('assets/user_avatar.png'),
+                                  radius: 20,
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        data['nickname'] ?? '알 수 없음',
+                                        style: TextStyle(fontWeight: FontWeight.bold),
+                                      ),
+                                      Text(
+                                        data['timestamp'] != null
+                                            ? (data['timestamp'] as Timestamp)
+                                            .toDate()
+                                            .toString()
+                                            : '시간 정보 없음',
+                                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(title, style: TextStyle(fontWeight: FontWeight.bold)),
+                                const SizedBox(height: 4),
+                                Text(location, style: TextStyle(color: Colors.grey)),
+                                const SizedBox(height: 8),
+                                Text(content),
+                              ],
+                            ),
+                          ),
+                          if (images.isNotEmpty)
+                            Container(
+                              height: 200,
+                              child: PageView.builder(
+                                itemCount: images.length,
+                                itemBuilder: (context, index) {
+                                  return Image.network(
+                                    images[index],
+                                    fit: BoxFit.cover,
+                                  );
+                                },
+                              ),
+                            ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                Row(
                                   children: [
-                                    const CircleAvatar(
-                                      backgroundImage: AssetImage('assets/user_avatar.png'),
-                                      radius: 20,
+                                    IconButton(
+                                      icon: Icon(
+                                        isSaved ? Icons.bookmark : Icons.bookmark_border,
+                                        color: isSaved ? Colors.black : Colors.grey,
+                                      ),
+                                      onPressed: () => _toggleSave(post),
                                     ),
-                                    const SizedBox(width: 10),
+                                    IconButton(
+                                      icon: Icon(
+                                        isLiked ? Icons.favorite : Icons.favorite_border,
+                                        color: isLiked ? Colors.red : Colors.grey,
+                                      ),
+                                      onPressed: () => _toggleLike(post),
+                                    ),
+                                    Text('$likes'),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                for (var comment in comments)
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 4.0),
+                                    child: Text('${comment['nickname']} : ${comment['comment']}'),
+                                  ),
+                                Row(
+                                  children: [
                                     Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            nickname,
-                                            style: TextStyle(fontWeight: FontWeight.bold),
-                                          ),
-                                          Text(
-                                            data['timestamp'] != null
-                                                ? (data['timestamp'] as Timestamp)
-                                                .toDate()
-                                                .toString()
-                                                : '시간 정보 없음',
-                                            style: TextStyle(fontSize: 12, color: Colors.grey),
-                                          ),
-                                        ],
+                                      child: TextField(
+                                        controller: commentController,
+                                        decoration: const InputDecoration(
+                                          hintText: '댓글을 입력하세요...',
+                                          border: InputBorder.none,
+                                        ),
                                       ),
                                     ),
-                                  ],
-                                ),
-                              ),
-                              // 게시물 내용
-                              Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(title, style: TextStyle(fontWeight: FontWeight.bold)),
-                                    const SizedBox(height: 4),
-                                    Text(location, style: TextStyle(color: Colors.grey)),
-                                    const SizedBox(height: 8),
-                                    Text(content),
-                                  ],
-                                ),
-                              ),
-                              // 좋아요, 저장, 댓글 버튼
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        IconButton(
-                                          icon: Icon(
-                                            isSaved ? Icons.bookmark : Icons.bookmark_border,
-                                            color: isSaved ? Colors.black : Colors.grey,
-                                          ),
-                                          onPressed: () => _toggleSave(post),
-                                        ),
-                                        IconButton(
-                                          icon: Icon(
-                                            isLiked ? Icons.favorite : Icons.favorite_border,
-                                            color: isLiked ? Colors.red : Colors.grey,
-                                          ),
-                                          onPressed: () => _toggleLike(post),
-                                        ),
-                                        Text('$likes'),
-                                      ],
+                                    IconButton(
+                                      icon: Icon(Icons.send),
+                                      onPressed: () async {
+                                        final comment = commentController.text.trim();
+                                        if (comment.isNotEmpty) {
+                                          // 댓글 추가
+                                          await _addComment(post, comment);
+                                          commentController.clear();
+                                        }
+                                      },
                                     ),
                                   ],
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        );
-                      },
+                        ],
+                      ),
                     );
                   },
                 );
@@ -248,29 +311,6 @@ class _CommunityPageState extends State<CommunityPage> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildTab(String title, int index) {
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          selectedTabIndex = index;
-        });
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10.0),
-        decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: selectedTabIndex == index ? Colors.blue : Colors.transparent, width: 2)),
-        ),
-        child: Text(
-          title,
-          style: TextStyle(
-            color: selectedTabIndex == index ? Colors.blue : Colors.black,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
       ),
     );
   }

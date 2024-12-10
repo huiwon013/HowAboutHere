@@ -33,9 +33,24 @@ class BookmarksPage extends StatelessWidget {
             itemBuilder: (context, index) {
               final post = posts[index];
               final data = post.data() as Map<String, dynamic>;
-              return ListTile(
-                title: Text(data['title']),
-                subtitle: Text(data['content']),
+              final title = data['title'] ?? '제목 없음';
+              final location = data['location'] ?? '위치 없음';
+              final content = data['content'] ?? '내용 없음';
+
+              return Card(
+                margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title, style: TextStyle(fontWeight: FontWeight.bold)),
+                      Text(location, style: TextStyle(color: Colors.grey)),
+                      const SizedBox(height: 8),
+                      Text(content),
+                    ],
+                  ),
+                ),
               );
             },
           );

@@ -1,13 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // Firebase Auth 사용
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io'; // 파일 시스템 사용
+import 'package:firebase_storage/firebase_storage.dart';
 
-class CMCreatePostPage extends StatelessWidget {
+class CMCreatePostPage extends StatefulWidget {
   CMCreatePostPage({super.key});
 
+  @override
+  _CMCreatePostPageState createState() => _CMCreatePostPageState();
+}
+
+class _CMCreatePostPageState extends State<CMCreatePostPage> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _contentController = TextEditingController();
+  File? _image; // 선택된 이미지를 저장할 변수
 
   Future<String> _getUserNickname(String uid) async {
     try {
@@ -16,11 +25,9 @@ class CMCreatePostPage extends StatelessWidget {
           .doc(uid)
           .get();
 
-      if (userSnapshot.exists) {
-        return userSnapshot['nickname'] ?? '닉네임 없음';
-      } else {
-        return '알 수 없음';
-      }
+      // userNickname 필드에서 닉네임을 가져옵니다
+      String userNickname = userSnapshot['userNickname'] ?? '닉네임 없음';
+      return userNickname;
     } catch (e) {
       print('Error getting user nickname: $e');
       return '알 수 없음';
@@ -42,15 +49,25 @@ class CMCreatePostPage extends StatelessWidget {
         // uid를 사용하여 닉네임을 가져옵니다.
         String nickname = await _getUserNickname(user.uid);
 
-        // 게시물 저장
-        await FirebaseFirestore.instance.collection('communityPosts').add({
+        // 게시물 저장 데이터 준비
+        final postData = {
           'title': _titleController.text,
           'location': _locationController.text,
           'content': _contentController.text,
           'nickname': nickname, // 닉네임 추가
           'timestamp': FieldValue.serverTimestamp(),
-          'userId': user.uid, // 사용자 ID 추가 (필요한 경우)
-        });
+          'userId': user.uid,
+        };
+
+        // 이미지가 선택되었으면, Firebase Storage에 업로드
+        if (_image != null) {
+          final imageUrl = await _uploadImageToFirebase(_image!);
+
+          postData['imageUrl'] = imageUrl; // 업로드한 이미지 URL 추가
+        }
+
+        // Firebase에 게시물 저장
+        await FirebaseFirestore.instance.collection('communityPosts').add(postData);
 
         print('게시물 저장 성공');
       } else {
@@ -61,64 +78,96 @@ class CMCreatePostPage extends StatelessWidget {
     }
   }
 
+  Future<String> _uploadImageToFirebase(File image) async {
+    try {
+      // Firebase Storage에 이미지를 업로드하는 로직
+      String fileName = DateTime.now().millisecondsSinceEpoch.toString();
+      Reference storageRef = FirebaseStorage.instance.ref().child('posts/images/$fileName');
+      UploadTask uploadTask = storageRef.putFile(image);
+
+      // 업로드 완료 후 이미지 URL 반환
+      TaskSnapshot taskSnapshot = await uploadTask;
+      String imageUrl = await taskSnapshot.ref.getDownloadURL();
+      return imageUrl; // 업로드된 이미지 URL 반환
+    } catch (e) {
+      print('Error uploading image: $e');
+      return ''; // 오류 발생 시 빈 문자열 반환
+    }
+  }
+
+  // 사진 선택 함수
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      setState(() {
+        _image = File(pickedFile.path); // 선택한 이미지 저장
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('test 커뮤니티 글 작성'), // 앱바 제목
-        backgroundColor: Colors.white, // 앱바 배경색
+        title: const Text('test 커뮤니티 글 작성'),
+        backgroundColor: Colors.white,
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0), // 패딩 추가
+        padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start, // 왼쪽 정렬
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 제목 입력 필드
             TextField(
               controller: _titleController,
               decoration: const InputDecoration(
                 labelText: '제목',
               ),
             ),
-            const SizedBox(height: 16.0), // 간격
-            // 장소 입력 필드
+            const SizedBox(height: 16.0),
             TextField(
               controller: _locationController,
               decoration: const InputDecoration(
                 labelText: '장소',
               ),
             ),
-            const SizedBox(height: 16.0), // 간격
-            // 사진 버튼
+            const SizedBox(height: 16.0),
+            // 사진 선택 버튼
             ElevatedButton(
-              onPressed: () {
-                // 사진 선택 동작 추가
-              },
+              onPressed: _pickImage,
               child: const Icon(Icons.camera_alt),
             ),
-            const SizedBox(height: 16.0), // 간격
-            // 글 작성 필드
+            const SizedBox(height: 16.0),
+            // 선택한 이미지 표시
+            if (_image != null)
+              Image.file(
+                _image!,
+                height: 200,
+                width: 200,
+                fit: BoxFit.cover,
+              ),
+            const SizedBox(height: 16.0),
             Container(
-              height: 300, // 글 작성 필드의 고정 높이
+              height: 300,
               child: SingleChildScrollView(
                 child: TextField(
                   controller: _contentController,
-                  maxLines: null, // 무한대로 줄 수 늘리기
+                  maxLines: null,
                   decoration: const InputDecoration(
                     hintText: '내용을 입력하세요',
-                    border: InputBorder.none, // 테두리 없애기
+                    border: InputBorder.none,
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 8.0), // 구분선과 완료 버튼 간격
-            // 구분선
+            const SizedBox(height: 8.0),
             Container(
-              height: 1.0, // 구분선의 두께
-              color: Colors.grey, // 구분선 색상
+              height: 1.0,
+              color: Colors.grey,
             ),
-            const SizedBox(height: 8.0), // 구분선과 완료 버튼 간격
+            const SizedBox(height: 8.0),
           ],
         ),
       ),
@@ -128,9 +177,9 @@ class CMCreatePostPage extends StatelessWidget {
           await _savePost();
           Navigator.pop(context); // 저장 후 이전 화면으로 이동
         },
-        child: const Text('완료'), // 텍스트 버튼으로 변경
+        child: const Text('완료'),
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.white, // 버튼 배경색
+          backgroundColor: Colors.white,
         ),
       ),
     );

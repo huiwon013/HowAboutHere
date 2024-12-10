@@ -33,7 +33,7 @@ class _MyPageState extends State<MyPage> {
         if (snapshot.exists) {
           setState(() {
             // 'name'과 'email' 필드에서 값을 가져옴
-            userNickname = snapshot['name'] ?? '닉네임 없음'; // 'name' 필드로 수정
+            userNickname = snapshot['userNickname'] ?? '닉네임 없음'; // 'name' 필드로 수정
             userEmail = snapshot['email'] ?? '이메일 없음'; // 'email' 필드로 수정
           });
         } else {
