@@ -57,6 +57,56 @@ class _MyPageState extends State<MyPage> {
     }
   }
 
+  Future<void> _updateNickname(String newNickname) async {
+    User? user = FirebaseAuth.instance.currentUser; // 현재 로그인한 사용자
+    if (user != null) {
+      try {
+        String uid = user.uid; // 사용자 UID 가져오기
+        await FirebaseFirestore.instance.collection('users').doc(uid).update({
+          'userNickname': newNickname, // 닉네임 업데이트
+        });
+        setState(() {
+          userNickname = newNickname; // UI 업데이트
+        });
+      } catch (e) {
+        print('닉네임 업데이트 실패: $e');
+      }
+    }
+  }
+
+  void _showEditNicknameDialog(BuildContext context) {
+    TextEditingController nicknameController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('닉네임 변경'),
+          content: TextField(
+            controller: nicknameController,
+            decoration: InputDecoration(hintText: '새 닉네임을 입력하세요.'),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('취소'),
+              onPressed: () {
+                Navigator.of(context).pop(); // 다이얼로그 닫기
+              },
+            ),
+            TextButton(
+              child: Text('저장'),
+              onPressed: () {
+                if (nicknameController.text.isNotEmpty) {
+                  _updateNickname(nicknameController.text); // 닉네임 업데이트 함수 호출
+                }
+                Navigator.of(context).pop(); // 다이얼로그 닫기
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -86,7 +136,7 @@ class _MyPageState extends State<MyPage> {
                   ),
                   TextButton(
                     onPressed: () {
-                      // TODO: 프로필 수정 기능 구현
+                      _showEditNicknameDialog(context); // 닉네임 수정 다이얼로그 호출
                     },
                     child: Text(
                       '프로필 수정',
@@ -113,23 +163,6 @@ class _MyPageState extends State<MyPage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => MyPostPage()), // MyPostPage로 이동
-                );
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.thumb_up),
-              title: Text('좋아요'),
-              onTap: () {
-                // TODO: 좋아요 기능 구현
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.bookmark),
-              title: Text('북마크'),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const BookmarksPage()), // 북마크 페이지로 이동
                 );
               },
             ),
