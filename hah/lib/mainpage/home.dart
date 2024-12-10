@@ -183,16 +183,31 @@ class _HomeScreenState extends State<HomeScreen> {
         crossAxisCount: 2,
         mainAxisSpacing: 10.0,
         crossAxisSpacing: 10.0,
-        childAspectRatio: 3,
+        childAspectRatio: 2,
       ),
       itemCount: cities.length,
       itemBuilder: (context, index) {
         return ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            foregroundColor: Colors.white, backgroundColor: Color(0xFF4EA7F6), // 버튼 텍스트 색상
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20.0), // 테두리 둥글게 조정
+              side: BorderSide(
+                color: Colors.grey, // 테두리 색상
+                width: 1,         // 테두리 두께
+              ),
+            ),
+            textStyle: const TextStyle(
+              fontSize: 18.0, // 폰트 크기
+              //fontWeight: FontWeight.bold, // (선택 사항) 글꼴 두께
+            ),
+          ),
           onPressed: () {
             Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => AllPostsPage(city: cities[index]),
+
               ),
             );
           },
@@ -201,6 +216,7 @@ class _HomeScreenState extends State<HomeScreen> {
       },
     );
   }
+
 
   // 해외 나라 그리드
   Widget buildCountryGrid() {
@@ -212,11 +228,25 @@ class _HomeScreenState extends State<HomeScreen> {
         crossAxisCount: 2,
         mainAxisSpacing: 10.0,
         crossAxisSpacing: 10.0,
-        childAspectRatio: 3,
+        childAspectRatio: 2,
       ),
       itemCount: countries.length,
       itemBuilder: (context, index) {
         return ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            foregroundColor: Colors.white, backgroundColor: Color(0xFF4EA7F6), // 버튼 텍스트 색상
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20.0), // 테두리 둥글게 조정
+              side: BorderSide(
+                color: Colors.grey, // 테두리 색상
+                width: 1,         // 테두리 두께
+              ),
+            ),
+            textStyle: const TextStyle(
+              fontSize: 18.0, // 폰트 크기
+              //fontWeight: FontWeight.bold, // (선택 사항) 글꼴 두께
+            ),
+          ),
           onPressed: () {
             Navigator.push(
               context,
