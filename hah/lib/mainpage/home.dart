@@ -189,7 +189,7 @@ class _HomeScreenState extends State<HomeScreen> {
       itemBuilder: (context, index) {
         return ElevatedButton(
           style: ElevatedButton.styleFrom(
-            foregroundColor: Colors.white, backgroundColor: Color(0xFF4EA7F6), // 버튼 텍스트 색상
+            foregroundColor: Colors.white, backgroundColor: Color(0xFF4CCFF2), // 버튼 텍스트 색상
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20.0), // 테두리 둥글게 조정
               side: BorderSide(
@@ -234,7 +234,7 @@ class _HomeScreenState extends State<HomeScreen> {
       itemBuilder: (context, index) {
         return ElevatedButton(
           style: ElevatedButton.styleFrom(
-            foregroundColor: Colors.white, backgroundColor: Color(0xFF4EA7F6), // 버튼 텍스트 색상
+            foregroundColor: Colors.white, backgroundColor: Color(0xFF4CCFF2), // 버튼 텍스트 색상
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20.0), // 테두리 둥글게 조정
               side: BorderSide(

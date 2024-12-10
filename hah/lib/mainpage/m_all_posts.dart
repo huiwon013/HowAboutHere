@@ -125,7 +125,7 @@ class _AllPostsPageState extends State<AllPostsPage> {
                     var postId = post.id;
 
                     return Card(
-                      color: Colors.white,
+                      color: Colors.lightBlue[50],
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8.0),
                         side: BorderSide(color: Colors.grey.shade300),

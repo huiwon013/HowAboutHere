@@ -46,7 +46,7 @@ class _AppBarWithBottomNavState extends State<AppBarWithBottomNav> {
         ],
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
-        selectedItemColor: Colors.deepPurple,
+        selectedItemColor: Colors.blueAccent,
         unselectedItemColor: Colors.grey,
       ),
     );
